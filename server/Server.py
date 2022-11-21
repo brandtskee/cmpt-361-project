@@ -17,6 +17,7 @@ def read_user_pass():
 # Parameters: list of client usernames (usernames)
 def make_client_directories(usernames):
 	for username in usernames:
+		# check if path exists before making directory
 		if os.path.exists(username) == False:
 			os.mkdir(username)
 	return
