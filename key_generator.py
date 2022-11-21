@@ -58,9 +58,26 @@ def keyGenServer():
 	os.chdir("..")
 	return
 
+# Purpose: read client names from user_pass.json
+# Return: list of client names
+def getClientNames():
+	os.chdir("server")
+	clients = {}
+	client_list = []
+	user_json = open("user_pass.json", "r")
+	clients = json.load(user_json)
+	user_json.close()
+	for i in clients:
+		client_list.append(i)
+	os.chdir("..")
+	return client_list
+
+# Purpose: main driver function for key_generator.py
+# Calls all functions to generate keys
 def key_generator():
+	# Get client names from user_pass.json
+	clients = getClientNames()
 	# Generate keys for each client
-	clients = ["client1", "client2", "client3", "client4", "client5"]
 	for i in clients:
 		private_name = f'{i}_private.pem'
 		public_name = f'{i}_public.pem'
