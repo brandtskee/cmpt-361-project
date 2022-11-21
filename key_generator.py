@@ -4,6 +4,9 @@ import os,glob, datetime
 import sys
 from Crypto.PublicKey import RSA
 
+
+# Purpose: generate public and private keys for clients
+# Parameters: public key name, private key name
 def keyGenClient(public_name, private_name):
 	# generate 2048 bit key
 	key = RSA.generate(2048)
@@ -31,6 +34,7 @@ def keyGenClient(public_name, private_name):
 	os.chdir("..")
 	return
 
+# Purpose: generate all keys needed for the server
 def keyGenServer():
 	# generate 2048 bit keys
 	key = RSA.generate(2048)
