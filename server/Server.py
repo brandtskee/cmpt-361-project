@@ -28,17 +28,14 @@ def create_assymetric_cipher(fileName):
 # Return: encrypted and padded message
 def encrypt_message(message, cipher, padBytes):
 	# encrypt message padded with 256 bits/32 bytes
-	encryptedMessage = cipher.encrypt(pad(message.encode('ascii'), padBytes))
+	encryptedMessage = cipher.encrypt(message)
 	return encryptedMessage
 
 # Purpose: decrypt message and remove padding
 # Parameters: encrypted message, AES or RSA cipher and amount of pad bytes to be removed
 # Return: decoded and unpadded message
 def decrypt_message(encryptedMessage, cipher, padBytes):
-	padded_message = cipher.decrypt(encryptedMessage)
-	unpadded_message = unpad(padded_message, padBytes)
-	decoded_message = unpadded_message.decode('ascii')
-	return decoded_message
+	return cipher.decrypt(encryptedMessage)
 
 # Purpose: send message to specified socket
 # Parameters: message, socket to send to
@@ -73,6 +70,33 @@ def make_client_directory(username):
 	return
 
 def main():
+	# define server socket on port 13000
+	port = 13000
+	try:
+		serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	except socket.error as err:
+		print("Error in server socket creation:", err)
+		sys.exit(1)
+
+	# server attempts to open server socket on port 13000
+	try:
+		serversocket.bind(('', port))
+	except socket.error as err:
+		print("Error in server socket:", err)
+		sys.exit()
+	# server prepares to accept incoming connection
+	serversocket.listen(5)
+	print("The server is ready to accept connections")
+	while True:
+		# accepts connection
+		# nested loops so when previous user disconnects, the server begins to listen for a new user to connect
+		connectionSocket, address = serversocket.accept()
+		encrypted_credentials = receiveMessage(connectionSocket)
+		server_Private_cipher = create_assymetric_cipher("server_private.pem")
+		decrypted_credentials = decrypt_message(encrypted_credentials, server_Private_cipher, 256)
+		print(encrypted_credentials)
+		print(binary_to_string(decrypted_credentials))
+
 	clients = read_user_pass()
 	client_names = []
 	for username in clients:
