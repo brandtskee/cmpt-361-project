@@ -69,6 +69,19 @@ def make_client_directory(username):
 		os.mkdir(username)
 	return
 
+# Purpose: check formatted username and password (user;pass) with json file to check credentials
+# Parameters: formatted credentials (in format user;pass)
+# Return: return the username if authenticated, return False if not authenticated
+def check_user_pass(formatted_credentials):
+	username_pass = formatted_credentials.split(";")
+	with open("user_pass.json", "r") as jsonFile:
+		clients = json.load(jsonFile)
+	for username in clients:
+		if username == username_pass[0]:
+			if clients[username] == username_pass[1]:
+				return username_pass[0]
+	return False
+	
 def main():
 	# define server socket on port 13000
 	port = 13000
@@ -93,15 +106,10 @@ def main():
 		connectionSocket, address = serversocket.accept()
 		encrypted_credentials = receiveMessage(connectionSocket)
 		server_Private_cipher = create_assymetric_cipher("server_private.pem")
-		decrypted_credentials = decrypt_message(encrypted_credentials, server_Private_cipher, 256)
-		print(encrypted_credentials)
-		print(binary_to_string(decrypted_credentials))
+		decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher, 256))
+		# username is FALSE if credentials are not correct
+		username = check_user_pass(decrypted_credentials)
 
-	clients = read_user_pass()
-	client_names = []
-	for username in clients:
-		client_names.append(username)
-	# create folders for client emails
 	return
 
 main()
