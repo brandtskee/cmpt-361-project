@@ -3,8 +3,9 @@ import socket
 import os,glob, datetime
 import sys
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
 
 def binary_to_string(bin_str):
     return bin_str.decode('utf-8')
@@ -26,7 +27,7 @@ def create_assymetric_cipher(fileName):
 # Purpose: pad and encrypt message to be sent
 # Parameters: message string, AES or RSA cipher, required pad bytes
 # Return: encrypted and padded message
-def encrypt_message(message, cipher, padBytes):
+def encrypt_message(message, cipher):
     # encrypt message padded with 256 bits/32 bytes
     encryptedMessage = cipher.encrypt(message)
     return encryptedMessage
@@ -34,7 +35,7 @@ def encrypt_message(message, cipher, padBytes):
 # Purpose: decrypt message and remove padding
 # Parameters: encrypted message, AES or RSA cipher and amount of pad bytes to be removed
 # Return: decoded and unpadded message
-def decrypt_message(encryptedMessage, cipher, padBytes):
+def decrypt_message(encryptedMessage, cipher):
     return cipher.decrypt(encryptedMessage)
 
 # Purpose: send message to specified socket
@@ -107,7 +108,7 @@ def main():
         connectionSocket, address = serversocket.accept()
         encrypted_credentials = receiveMessage(connectionSocket)
         server_Private_cipher = create_assymetric_cipher("server_private.pem")
-        decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher, 256))
+        decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher))
         # username is FALSE if credentials are not correct
         # print(decrypted_credentials)
         username = check_user_pass(decrypted_credentials)
@@ -117,6 +118,15 @@ def main():
             sendMessage((f"Invalid username or password.\nTerminating").encode("ascii"), connectionSocket)
             connectionSocket.close()
         else:
+            # generate random 256 bit key
+            symmetric_key = get_random_bytes(int(256/8))
+            symmetric_cipher = AES.new(symmetric_key, AES.MODE_ECB)
+            public_key_name = f'{username}_public.pem'
+            # encrypt sym key with client public key
+            client_publicKey_cipher = create_assymetric_cipher(public_key_name)
+            encrypted_symmetric_key = encrypt_message(symmetric_key, client_publicKey_cipher)
+            sendMessage(encrypted_symmetric_key, connectionSocket)
+            
             print("send menu")
 
     return

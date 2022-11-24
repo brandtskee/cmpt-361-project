@@ -26,7 +26,7 @@ def create_assymetric_cipher(fileName):
 # Purpose: pad and encrypt message to be sent
 # Parameters: message string, AES or RSA cipher, required pad bytes
 # Return: encrypted and padded message
-def encrypt_message(message, cipher, padBytes):
+def encrypt_message(message, cipher):
     # encrypt message padded with 256 bits/32 bytes
     encryptedMessage = cipher.encrypt(message)
     return encryptedMessage
@@ -34,7 +34,7 @@ def encrypt_message(message, cipher, padBytes):
 # Purpose: decrypt message and remove padding
 # Parameters: encrypted message, AES or RSA cipher and amount of pad bytes to be removed
 # Return: decoded and unpadded message
-def decrypt_message(encryptedMessage, cipher, padBytes):
+def decrypt_message(encryptedMessage, cipher):
     return cipher.decrypt(encryptedMessage)
 
 # Purpose: send message to specified socket
@@ -70,8 +70,19 @@ def client():
         clientSocket.connect((serverName, port))
         # main client interface loop
         server_PublicKey_cipher = create_assymetric_cipher("server_public.pem")
-        encrypted_credentials = encrypt_message(string_to_binary(formatted_credentials), server_PublicKey_cipher, 256)
+        encrypted_credentials = encrypt_message(string_to_binary(formatted_credentials), server_PublicKey_cipher)
         sendMessage(encrypted_credentials, clientSocket)
+        try:
+            encrypted_symmetric_key = receiveMessage(clientSocket)
+            private_key_name = f'{username}_private.pem'
+            # decrypt symmetric key with client private key
+            client_privatekey_cipher = create_assymetric_cipher(private_key_name)
+            symmetric_key = decrypt_message(encrypted_symmetric_key, client_privatekey_cipher)
+            print("SYM KEY: ", symmetric_key)
+        except:
+            message = receiveMessage(clientSocket)
+            print(message.decode('ascii'))
+
         
         
         # either client receives Terminating message or the menu
