@@ -1,0 +1,24 @@
+import socket
+import sys
+import os
+import random
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+
+EXIT = "The connection is terminated with the server.\n"
+INCORRECT_ID = "Invalid username or password.\nTerminating.\n"
+def terminate(message,connectionSocket):
+    sendMessage(message,connectionSocket)
+    connectionSocket.close()
+
+def get_email(id_string):
+    emails = id_string.split(";")
+    return emails
+
+def send_file(filename):
+    with open(filename, "rb") as f:
+         txt = f.read()
+    if len(text) > 1000000:
+        return f"Message is too long"
+    return txt
