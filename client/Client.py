@@ -3,7 +3,7 @@ import socket
 import os,glob, datetime
 import sys
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.Padding import pad, unpad
 
 def binary_to_string(bin_str):
@@ -78,6 +78,7 @@ def client():
             # decrypt symmetric key with client private key
             client_privatekey_cipher = create_assymetric_cipher(private_key_name)
             symmetric_key = decrypt_message(encrypted_symmetric_key, client_privatekey_cipher)
+            symmetric_cipher = AES.new(symmetric_key, AES.MODE_ECB)
             print("SYM KEY: ", symmetric_key)
         except:
             message = receiveMessage(clientSocket)
