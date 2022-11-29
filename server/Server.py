@@ -106,29 +106,33 @@ def main():
         # accepts connection
         # nested loops so when previous user disconnects, the server begins to listen for a new user to connect
         connectionSocket, address = serversocket.accept()
-        encrypted_credentials = receiveMessage(connectionSocket)
-        server_Private_cipher = create_assymetric_cipher("server_private.pem")
-        decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher))
-        # username is FALSE if credentials are not correct
-        # print(decrypted_credentials)
-        username, is_valid = check_user_pass(decrypted_credentials)
         
-        if is_valid == False:
-            # send user the Invalid username or password.\n Terminating
-            print(f'The received client information: {username} is invalid. (Connection Terminated).')
-            sendMessage((f"Invalid username or password.\nTerminating").encode("ascii"), connectionSocket)
-            connectionSocket.close()
-        else:
-            # generate random 256 bit key
-            symmetric_key = get_random_bytes(int(256/8))
-            symmetric_cipher = AES.new(symmetric_key, AES.MODE_ECB)
-            public_key_name = f'{username}_public.pem'
-            # encrypt sym key with client public key
-            client_publicKey_cipher = create_assymetric_cipher(public_key_name)
-            encrypted_symmetric_key = encrypt_message(symmetric_key, client_publicKey_cipher)
-            sendMessage(encrypted_symmetric_key, connectionSocket)
+        # call fork to allow mutliple simultaneous connections
+        pid = os.fork()
+        if pid == 0:
+            encrypted_credentials = receiveMessage(connectionSocket)
+            server_Private_cipher = create_assymetric_cipher("server_private.pem")
+            decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher))
+            # username is FALSE if credentials are not correct
+            # print(decrypted_credentials)
+            username, is_valid = check_user_pass(decrypted_credentials)
             
-            print(f'Connection Accepted and Symmetric Key Generated for client: {username}')
+            if is_valid == False:
+                # send user the Invalid username or password.\n Terminating
+                print(f'The received client information: {username} is invalid. (Connection Terminated).')
+                sendMessage((f"Invalid username or password.\nTerminating").encode("ascii"), connectionSocket)
+                connectionSocket.close()
+                return
+            else:
+                # generate random 256 bit key
+                symmetric_key = get_random_bytes(int(256/8))
+                symmetric_cipher = AES.new(symmetric_key, AES.MODE_ECB)
+                public_key_name = f'{username}_public.pem'
+                # encrypt sym key with client public key
+                client_publicKey_cipher = create_assymetric_cipher(public_key_name)
+                encrypted_symmetric_key = encrypt_message(symmetric_key, client_publicKey_cipher)
+                sendMessage(encrypted_symmetric_key, connectionSocket)
+                print(f'Connection Accepted and Symmetric Key Generated for client: {username}')
 
     return
 
