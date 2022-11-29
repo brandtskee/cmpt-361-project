@@ -73,7 +73,7 @@ def make_client_directory(username):
 
 # Purpose: check formatted username and password (user;pass) with json file to check credentials
 # Parameters: formatted credentials (in format user;pass)
-# Return: return the username if authenticated, return False if not authenticated
+# Return: return the username and True if authenticated, False if incorrect
 def check_user_pass(formatted_credentials):
     username_pass = formatted_credentials.split(";")
     with open("user_pass.json", "r") as jsonFile:
@@ -81,8 +81,8 @@ def check_user_pass(formatted_credentials):
     for username in clients:
         if username == username_pass[0]:
             if clients[username] == username_pass[1]:
-                return username_pass[0]
-    return False
+                return username_pass[0], True
+    return username_pass[0], False
     
 def main():
     # define server socket on port 13000
@@ -111,10 +111,11 @@ def main():
         decrypted_credentials = binary_to_string(decrypt_message(encrypted_credentials, server_Private_cipher))
         # username is FALSE if credentials are not correct
         # print(decrypted_credentials)
-        username = check_user_pass(decrypted_credentials)
+        username, is_valid = check_user_pass(decrypted_credentials)
         
-        if username == False:
+        if is_valid == False:
             # send user the Invalid username or password.\n Terminating
+            print(f'The received client information: {username} is invalid. (Connection Terminated).')
             sendMessage((f"Invalid username or password.\nTerminating").encode("ascii"), connectionSocket)
             connectionSocket.close()
         else:
@@ -127,7 +128,7 @@ def main():
             encrypted_symmetric_key = encrypt_message(symmetric_key, client_publicKey_cipher)
             sendMessage(encrypted_symmetric_key, connectionSocket)
             
-            print("send menu")
+            print(f'Connection Accepted and Symmetric Key Generated for client: {username}')
 
     return
 
