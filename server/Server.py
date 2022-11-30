@@ -7,6 +7,8 @@ from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
+menu = "\nSelect the operation:\n1) Create and send an email\n\t2) Display the inbox list\n3) Display the email contents 4) Terminate the connection\nChoice:"
+
 def binary_to_string(bin_str):
     return bin_str.decode('utf-8')
 
@@ -37,6 +39,18 @@ def encrypt_message(message, cipher):
 # Return: decoded and unpadded message
 def decrypt_message(encryptedMessage, cipher):
     return cipher.decrypt(encryptedMessage)
+
+def encrypt_symmetric_message(message, cipher):
+	padBytes = int(256/8)
+	encryptedMessage = encryptedMessage = cipher.encrypt(pad(message.encode('ascii'), padBytes))
+	return encryptedMessage
+
+def decrypt_symmetric_message(encryptedMessage, cipher):
+	padBytes = int(256/8)
+	padded_message = cipher.decrypt(encryptedMessage)
+	unpadded_message = unpad(padded_message, padBytes)
+	decoded_message = unpadded_message.decode('ascii')
+	return decoded_message
 
 # Purpose: send message to specified socket
 # Parameters: message, socket to send to
@@ -83,7 +97,13 @@ def check_user_pass(formatted_credentials):
             if clients[username] == username_pass[1]:
                 return username_pass[0], True
     return username_pass[0], False
-    
+
+
+
+
+
+
+
 def main():
     # define server socket on port 13000
     port = 13000
@@ -120,7 +140,7 @@ def main():
             if is_valid == False:
                 # send user the Invalid username or password.\n Terminating
                 print(f'The received client information: {username} is invalid. (Connection Terminated).')
-                sendMessage((f"Invalid username or password.\nTerminating").encode("ascii"), connectionSocket)
+                sendMessage((f"Invalid username or password.\nTerminating.").encode("ascii"), connectionSocket)
                 connectionSocket.close()
                 return
             else:
@@ -133,6 +153,16 @@ def main():
                 encrypted_symmetric_key = encrypt_message(symmetric_key, client_publicKey_cipher)
                 sendMessage(encrypted_symmetric_key, connectionSocket)
                 print(f'Connection Accepted and Symmetric Key Generated for client: {username}')
+                # receive OK ack
+                acknowledgement = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
+                print(acknowledgement)
+                sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
+                while True:
+                    sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
+                    received_input = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
+                    pass
+
+                
 
     return
 
