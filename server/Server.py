@@ -7,7 +7,7 @@ from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
-menu = "\nSelect the operation:\n1) Create and send an email\n\t2) Display the inbox list\n3) Display the email contents 4) Terminate the connection\nChoice:"
+menu = "\nSelect the operation:\n\t1) Create and send an email\n\t2) Display the inbox list\n\t3) Display the email contents\n\t4) Terminate the connection\nChoice:"
 
 def binary_to_string(bin_str):
     return bin_str.decode('utf-8')
