@@ -109,7 +109,24 @@ def read_inbox(username):
     inbox_chart += menu
     return inbox_chart
 
+def get_dict(cli_nme):
+    f = open(f'{cli_nme}/inbox.json','r')
+    data = json.load(f)
+    return data 
 
+def get_email(inbox, index):
+    for key in inbox:
+        if index == key:
+            cli = inbox[key]['sender']
+            title = inbox[key]['title']
+    file = ""+cli+"_"+title+".txt"
+    return file
+
+def load_email(filename):
+    f = open(filename)
+    email = f.read()
+    email += "\n"
+    return email
 
 
 def main():
@@ -170,7 +187,14 @@ def main():
                     if received_input == '2':
                         formatted_chart = read_inbox(username)
                         sendMessage(encrypt_symmetric_message(formatted_chart, symmetric_cipher), connectionSocket)
-                    
+                    if received_input == '3':
+                        jsonFile = get_dict(username)
+                        sendMessage(encrypt_symmetric_message("Enter the email index you wish to view: ", symmetric_cipher), connectionSocket)
+                        email_index = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
+                        email_file = get_email(jsonFile, email_index)
+                        email_string = load_email(f'{username}/{email_file}')
+                        email_string += menu
+                        sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
                     if received_input == '4':
                         sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
                         connectionSocket.close()
