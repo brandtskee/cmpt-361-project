@@ -110,7 +110,21 @@ def client():
 			# or statement to check to ensure string is not empty
 			input_message = input() or " "
 			sendMessage(encrypt_symmetric_message(input_message, symmetric_cipher), clientSocket)
-		
+			print(input_message, type(input_message))
+			if input_message == '1':
+				pass
+			elif input_message == '2':
+				pass
+			elif input_message == '3':
+				pass
+			elif input_message == '4':
+				encrypted_terminate = receiveMessage(clientSocket)
+				print(encrypted_terminate)
+				terminate = decrypt_symmetric_message(encrypted_terminate,symmetric_cipher)
+				print(terminate)
+				clientSocket.close()
+			else:
+				pass
 	except socket.error as err:
 			print("Error:", err)
 			sys.exit(1)

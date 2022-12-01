@@ -9,6 +9,24 @@ from Crypto.Random import get_random_bytes
 
 menu = "\nSelect the operation:\n\t1) Create and send an email\n\t2) Display the inbox list\n\t3) Display the email contents\n\t4) Terminate the connection\nChoice:"
 
+EXIT = "The connection is terminated with the server.\n"
+INCORRECT_ID = "Invalid username or password.\nTerminating.\n"
+def terminate(message,connectionSocket, cipher):
+    encrypted_terminate = encrypt_symmetric_message(message, cipher)
+    sendMessage(encrypted_terminate,connectionSocket)
+
+def get_email(id_string):
+    emails = id_string.split(";")
+    return emails
+
+def send_file(filename):
+    with open(filename, "rb") as f:
+         txt = f.read()
+    if len(txt) > 1000000:
+        return f"Message is too long"
+    return txt
+
+
 def binary_to_string(bin_str):
     return bin_str.decode('utf-8')
 
@@ -160,9 +178,17 @@ def main():
                 while True:
                     sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
                     received_input = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
-                    pass
-
-                
+                    # server receives 1-2-3-4 or something not correct
+                    print(received_input)
+                    if received_input == '1':
+                        pass
+                    elif received_input == '2':
+                        pass
+                    elif received_input == '3':
+                        pass
+                    elif received_input == '4':
+                        terminate(EXIT,connectionSocket, symmetric_cipher)
+                        connectionSocket.close()
 
     return
 
