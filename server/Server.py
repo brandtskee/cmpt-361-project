@@ -99,7 +99,15 @@ def check_user_pass(formatted_credentials):
     return username_pass[0], False
 
 
-
+def read_inbox(username):
+    with open(f'{username}/inbox.json', 'r') as jsonFile:
+            mail_List = json.load(jsonFile)
+    inbox_chart = "\n{:<16}{:<24}{:<34}{:<24}".format("Index","From","DateTime","Title")
+    for key in mail_List:
+        newLine = "\n{:<16}{:<24}{:<34}{:<24}".format(key, mail_List[key]['sender'], mail_List[key]['datetime'], mail_List[key]['title'])
+        inbox_chart += newLine
+    inbox_chart += menu
+    return inbox_chart
 
 
 
@@ -159,11 +167,16 @@ def main():
                 sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
                 while True:
                     received_input = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
+                    if received_input == '2':
+                        formatted_chart = read_inbox(username)
+                        sendMessage(encrypt_symmetric_message(formatted_chart, symmetric_cipher), connectionSocket)
+                    
                     if received_input == '4':
                         sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
                         connectionSocket.close()
                         return
-                    sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
+                    else:
+                        sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
 
                 
 
