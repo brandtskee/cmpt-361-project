@@ -106,6 +106,9 @@ def client():
 		# interface loop
 		while True:
 			message = decrypt_symmetric_message(receiveMessage(clientSocket), symmetric_cipher)
+			if "Connection Terminated" in message:
+				clientSocket.close()
+				return
 			print(message, end=' ')
 			# or statement to check to ensure string is not empty
 			input_message = input() or " "

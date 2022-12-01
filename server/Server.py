@@ -158,9 +158,12 @@ def main():
                 print(acknowledgement)
                 sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
                 while True:
-                    sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
                     received_input = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
-                    pass
+                    if received_input == '4':
+                        sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
+                        connectionSocket.close()
+                        return
+                    sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
 
                 
 
