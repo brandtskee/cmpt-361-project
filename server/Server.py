@@ -187,7 +187,7 @@ def main():
                     if received_input == '2':
                         formatted_chart = read_inbox(username)
                         sendMessage(encrypt_symmetric_message(formatted_chart, symmetric_cipher), connectionSocket)
-                    if received_input == '3':
+                    elif received_input == '3':
                         jsonFile = get_dict(username)
                         sendMessage(encrypt_symmetric_message("Enter the email index you wish to view: ", symmetric_cipher), connectionSocket)
                         email_index = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
@@ -195,7 +195,7 @@ def main():
                         email_string = load_email(f'{username}/{email_file}')
                         email_string += menu
                         sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
-                    if received_input == '4':
+                    elif received_input == '4':
                         sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
                         connectionSocket.close()
                         return
