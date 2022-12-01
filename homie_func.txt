@@ -22,3 +22,24 @@ def send_file(filename):
     if len(text) > 1000000:
         return f"Message is too long"
     return txt
+
+
+
+
+def get_dict(cli_nme):
+    f = open(cli_nme,'r')
+    data = json.load(f)
+    return data 
+
+def get_email(inbox, index):
+    for key in inbox:
+        if index == key:
+            cli = inbox[key]['sender']
+            title = inbox[key]['title']
+    file = " "+cli+"_"+title+".txt"
+    return file
+
+def load_email(filename):
+    f = open(filename)
+    email = f.read()
+    return email
