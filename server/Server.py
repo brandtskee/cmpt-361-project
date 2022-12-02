@@ -100,6 +100,8 @@ def check_user_pass(formatted_credentials):
 
 
 def read_inbox(username):
+    if os.path.exists(f'{username}/inbox.json') == False:
+        return "The inbox is empty.\n" + menu
     with open(f'{username}/inbox.json', 'r') as jsonFile:
             mail_List = json.load(jsonFile)
     inbox_chart = "\n{:<16}{:<24}{:<34}{:<24}".format("Index","From","DateTime","Title")
@@ -110,9 +112,11 @@ def read_inbox(username):
     return inbox_chart
 
 def get_dict(cli_nme):
+    if os.path.exists(f'{cli_nme}/inbox.json') == False:
+        return ' ', False
     f = open(f'{cli_nme}/inbox.json','r')
     data = json.load(f)
-    return data 
+    return data, True
 
 def get_email(inbox, index):
     for key in inbox:
@@ -128,6 +132,158 @@ def load_email(filename):
     email += "\n"
     return email
 
+'''
+Purpose: Takes user input and creates an email string in the correct format
+Parameters:
+   sender - client who wants to send the message
+   reciever - clients who are to recieve the message
+   title - title of the email
+   content - the message content
+   date_time - the date and time as a string
+Returns:
+   email - string containing the formatted string for the email
+'''
+def construct_email(sender, reciever, title, content, date_time): 
+    content_length = str(len(content)) #gets the length of the message content
+
+    #creates a list of strings to join together
+    msg_list = ["From: ", sender, "\n", 
+                "To: ", reciever, "\n",
+                "Time and Date: ", date_time, "\n",
+                "Title: ", title, "\n",
+                "Content Length: ", content_length, "\n",
+                "Content: \n", content]
+    
+    #takes the list of strings and creates one string for the whole email
+    email = "".join(msg_list)
+
+    return email
+
+'''
+Purpose: Takes a formatted email string and seperates it into its components
+Parameters:
+   email - string containing the email message
+Returns:
+   sender - client who wants to send the message
+   reciever - clients who are to recieve the message
+   title - title of the email
+   content_length - string of the number of characters in the content
+   content - the message content of the email
+'''
+def deconstruct_email(email):
+    section_list = email.split("\n")#split up the email string by newline
+
+    #getting the individual values for each variable
+    sender = section_list[0][6:]
+    reciever = section_list[1][4:]
+    title = section_list[2][7:]
+    content_length = section_list[3][16:]
+    content = section_list[5]
+    
+    return sender, reciever, title, content_length, content
+
+'''
+Purpose: Verifies that the content and the title are within the character limit
+Parameters:
+   title - string containing the email title
+   content - string containing the email message contents
+Returns:
+   boolean - True if the variables are within the limit, false if not
+'''
+def verify_email(title, content): 
+    if len(title) > 100: #Checking the title limit
+        print("Title length exceeded 100")
+        return False
+    if len(content)> 1000000: #Checking the content limit
+        print("Content length exceeded 1,000,000")
+        return False
+    return True
+
+'''
+Purpose: Saves the email into the appropriate clients folders with the correct filenames
+Parameters:
+   reciever_list - a list of the clients that the email is to be sent to
+   sender - string of who sent the email
+   title - title of the email
+   email - string of the entire email string
+Returns:
+   None
+'''
+def save_email(reciever_list, sender, title, date_time, email):
+    for reciever in reciever_list: #goes through the clients to recieve the email
+        make_client_directory(reciever)
+        filename = reciever + "/" + sender + "_" + title + ".txt" #gets the correct filename for the email
+        text_file = open(filename, "w")
+        text_file.write(email)
+        text_file.close()
+        update_json(reciever, {'title': title, 'datetime': date_time, 'sender': sender})
+    return
+
+
+'''
+Purpose: Updates the inbox.json file to include the metadata for the inbox emails
+Parameters:
+   client - the name of the reciever
+   data - a dictionary with the data
+Returns:
+   None
+'''
+def update_json(client, data):
+    #checks if the json file exists
+    if os.path.exists(f"{client}/inbox.json") == False: 
+        file = open(f"{client}/inbox.json", 'w')
+        file.close()
+
+    #opens and updates the data in the json file
+    with open(f"{client}/inbox.json", 'r+') as inbox:
+        if os.path.getsize(f"{client}/inbox.json") == 0:
+            index_data = {1:data}
+            json.dump(index_data, inbox)
+        else:
+            inbox_data = json.load(inbox)
+            index_data = {len(inbox_data)+1: data}
+            inbox_data.update(index_data)
+            inbox.seek(0)
+            json.dump(inbox_data, inbox)
+    return
+
+'''
+Purpose: Send the email subprotocol
+Parameters:
+   socket - contains the socket to send through
+   cipher - to encrypt/decrypt messages
+Returns:
+   None
+'''
+def send_email(socket, cipher): 
+    #send the start message for the sending email subprotocol
+    start_msg = "Send the email"
+    sendMessage(encrypt_symmetric_message(start_msg, cipher), socket)
+
+    #recieve the email from the user
+    sent_mail = decrypt_symmetric_message(receiveMessage(socket), cipher) 
+
+    #get the date and time for the recieved email
+    date_time = str(datetime.datetime.now())
+
+    #deconstruct the email to get the individual values
+    sender, reciever, title, content_length, content = deconstruct_email(sent_mail)
+
+    #checks the validity of the title and the contents
+    if verify_email(title, content) == False:
+        return
+
+    #print email message to the server
+    print("An email from", sender, "is sent to", reciever, 
+          "has a content length of", content_length, '.')
+
+    #Reconstruct the email with the date and time added
+    email = construct_email(sender, reciever, title, content, date_time)
+
+    #save the email to the appropriate client files
+    save_email(reciever.split(";"), sender, title, date_time, email)
+
+    return
 
 def main():
     # define server socket on port 13000
@@ -180,28 +336,35 @@ def main():
                 print(f'Connection Accepted and Symmetric Key Generated for client: {username}')
                 # receive OK ack
                 acknowledgement = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
-                print(acknowledgement)
+                #print(acknowledgement)
                 sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
                 while True:
                     received_input = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
-                    if received_input == '2':
+                    if received_input == '1':
+                        send_email(connectionSocket, symmetric_cipher)
+                        sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
+                    elif received_input == '2':
                         formatted_chart = read_inbox(username)
                         sendMessage(encrypt_symmetric_message(formatted_chart, symmetric_cipher), connectionSocket)
                     elif received_input == '3':
-                        jsonFile = get_dict(username)
-                        sendMessage(encrypt_symmetric_message("Enter the email index you wish to view: ", symmetric_cipher), connectionSocket)
-                        email_index = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
-                        email_file = get_email(jsonFile, email_index)
-                        email_string = load_email(f'{username}/{email_file}')
-                        email_string += menu
-                        sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
+                        jsonFile, has_data = get_dict(username)
+                        if has_data == False:
+                            sendMessage(encrypt_symmetric_message("The inbox is empty.\n\n" + menu, symmetric_cipher), connectionSocket)
+                        else:
+                            sendMessage(encrypt_symmetric_message("Enter the email index you wish to view: ", symmetric_cipher), connectionSocket)
+                            email_index = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
+                            email_file = get_email(jsonFile, email_index)
+                            email_string = load_email(f'{username}/{email_file}')
+                            email_string += menu
+                            sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
                     elif received_input == '4':
                         sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
+                        print(f'Terminating connection with {username}')
                         connectionSocket.close()
                         return
                     else:
                         sendMessage(encrypt_symmetric_message(menu, symmetric_cipher), connectionSocket)
-
+                    
                 
 
     return

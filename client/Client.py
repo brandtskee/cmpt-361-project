@@ -62,6 +62,85 @@ def receiveMessage(socketType):
 	message = socketType.recv(2048)
 	return message
 
+'''
+Purpose: Constructs an email of the proper format with user inputed values
+Parameters:
+   sender - client who wants to send the message
+   reciever - clients who are to recieve the message
+   title - title of the email
+   content - the message content
+Returns:
+   email - string containing the formatted string for the email
+'''
+def construct_email(sender, reciever, title, content): 
+    content_length = str(len(content)) #gets the content length
+
+	#creates a list of strings to join together
+    msg_list = ["From: ", sender, "\n", 
+                "To: ", reciever, "\n",
+                "Title: ", title, "\n",
+                "Content Length: ", content_length, "\n",
+                "Content: \n", content]
+
+	#takes the list of strings and creates one string for the whole email
+    email = "".join(msg_list)
+
+    return email
+
+'''
+Purpose: Verifies that the content and the title are within the character limit
+Parameters:
+   title - string containing the email title
+   content - string containing the email message contents
+Returns:
+   boolean - True if the variables are within the limit, false if not
+'''
+def verify_email(title, content): 
+    if len(title) > 100: #Checking the title limit
+        print("Title length exceeded 100")
+        return False
+    if len(content)> 1000000: #Checking the content limit
+        print("Content length exceeded 1,000,000")
+        return False
+    return True
+
+'''
+Purpose: Send the email subprotocol
+Parameters:
+   socket - contains the socket to send through
+   cipher - to encrypt/decrypt messages
+Returns:
+   None
+'''
+def send_email(socket, user, cipher): 
+	#get user input
+    send_to = input("Enter destinations (separated by ;): ")
+    title = input("Enter title: ")
+    load_file = input("Would you like to load contents from a file? (Y/N) ")
+
+	#checks if the user wants to load in a message
+    if load_file.upper() == "Y":
+        filename = input("Enter filename: ")
+        f = open(filename, "r")
+        message = f.read()
+        f.close()
+    else:
+        message = input("Enter message contents: ")
+
+	#verifies the title and the content lengths
+    if verify_email(title, message) == False:
+        return
+
+	#builds the email
+    email = construct_email(user, send_to, title, message)
+
+    #send the email to server
+    sendMessage(encrypt_symmetric_message(email, cipher), socket)
+
+	#prints message to client 
+    print("The message is sent to the server.")
+    return
+
 def client():
 	serverName = input("Enter the server IP or name: ")
 	username = input("Enter your username: ")
@@ -107,12 +186,16 @@ def client():
 		while True:
 			message = decrypt_symmetric_message(receiveMessage(clientSocket), symmetric_cipher)
 			if "Connection Terminated" in message:
+				print("The connection is terminated with the server.")
 				clientSocket.close()
 				return
-			print(message, end=' ')
-			# or statement to check to ensure string is not empty
-			input_message = input() or " "
-			sendMessage(encrypt_symmetric_message(input_message, symmetric_cipher), clientSocket)
+			elif "Send the email" == message:
+				send_email(clientSocket, username, symmetric_cipher)
+			else:
+				print(message, end=' ')
+				# or statement to check to ensure string is not empty
+				input_message = input() or " "
+				sendMessage(encrypt_symmetric_message(input_message, symmetric_cipher), clientSocket)
 		
 	except socket.error as err:
 			print("Error:", err)
