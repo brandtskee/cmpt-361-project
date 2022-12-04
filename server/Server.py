@@ -108,7 +108,7 @@ def read_inbox(username):
     for key in mail_List:
         newLine = "\n{:<16}{:<24}{:<34}{:<24}".format(key, mail_List[key]['sender'], mail_List[key]['datetime'], mail_List[key]['title'])
         inbox_chart += newLine
-    inbox_chart += menu
+    inbox_chart += "\n" + menu
     return inbox_chart
 
 def get_dict(cli_nme):
@@ -119,11 +119,16 @@ def get_dict(cli_nme):
     return data, True
 
 def get_email(inbox, index):
+    email_exists = False
     for key in inbox:
         if index == key:
+            email_exists = True
             cli = inbox[key]['sender']
             title = inbox[key]['title']
-    file = ""+cli+"_"+title+".txt"
+    if email_exists == False:
+        file = False
+    else:
+        file = ""+cli+"_"+title+".txt"
     return file
 
 def load_email(filename):
@@ -354,9 +359,13 @@ def main():
                             sendMessage(encrypt_symmetric_message("Enter the email index you wish to view: ", symmetric_cipher), connectionSocket)
                             email_index = decrypt_symmetric_message(receiveMessage(connectionSocket), symmetric_cipher)
                             email_file = get_email(jsonFile, email_index)
-                            email_string = load_email(f'{username}/{email_file}')
-                            email_string += menu
-                            sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
+                            # check if email index exists
+                            if email_file == False:
+                                sendMessage(encrypt_symmetric_message(f"Email index does not exist.\n{menu}", symmetric_cipher), connectionSocket)
+                            else:
+                                email_string = "\n" + load_email(f'{username}/{email_file}')
+                                email_string += menu
+                                sendMessage(encrypt_symmetric_message(email_string, symmetric_cipher), connectionSocket)
                     elif received_input == '4':
                         sendMessage(encrypt_symmetric_message("Connection Terminated", symmetric_cipher), connectionSocket)
                         print(f'Terminating connection with {username}')
