@@ -216,12 +216,15 @@ Returns:
 '''
 def save_email(reciever_list, sender, title, date_time, email):
     for reciever in reciever_list: #goes through the clients to recieve the email
-        make_client_directory(reciever)
-        filename = reciever + "/" + sender + "_" + title + ".txt" #gets the correct filename for the email
-        text_file = open(filename, "w")
-        text_file.write(email)
-        text_file.close()
-        update_json(reciever, {'title': title, 'datetime': date_time, 'sender': sender})
+        try:
+            make_client_directory(reciever)
+            filename = reciever + "/" + sender + "_" + title + ".txt" #gets the correct filename for the email
+            text_file = open(filename, "w")
+            text_file.write(email)
+            text_file.close()
+            update_json(reciever, {'title': title, 'datetime': date_time, 'sender': sender})
+        except:
+            continue
     return
 
 
