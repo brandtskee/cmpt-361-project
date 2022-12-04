@@ -8,86 +8,109 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
 menu = "\nSelect the operation:\n\t1) Create and send an email\n\t2) Display the inbox list\n\t3) Display the email contents\n\t4) Terminate the connection\nChoice:"
-
+'''
+Purpose: converts binary strings to regular strings
+Parameter: a binary string
+Returns: the decode string'''
 def binary_to_string(bin_str):
     return bin_str.decode('utf-8')
-
+'''
+Purpose: convers regular string to binary string
+Parameter: regular string
+Returns: string into binary string
+'''
 def string_to_binary(string):
     return string.encode('utf-8')
-
+'''
 # Purpose: creates cipher from public or private key file
 # USE FOR PUBLIC AND PRIVATE KEY CIPHERS
 # Parameters: file name of key
 # Return: generated cipher
+'''
 def create_assymetric_cipher(fileName):
     with open(fileName, "rb") as key_file:
         key_data = key_file.read()
     key = RSA.import_key(key_data)
     cipher = PKCS1_OAEP.new(key)
     return cipher
-
+'''
 # Purpose: pad and encrypt message to be sent
 # Parameters: message string, AES or RSA cipher, required pad bytes
 # Return: encrypted and padded message
+'''
 def encrypt_message(message, cipher):
     # encrypt message padded with 256 bits/32 bytes
     encryptedMessage = cipher.encrypt(message)
     return encryptedMessage
-
+'''
 # Purpose: decrypt message and remove padding
 # Parameters: encrypted message, AES or RSA cipher and amount of pad bytes to be removed
 # Return: decoded and unpadded message
+'''
 def decrypt_message(encryptedMessage, cipher):
     return cipher.decrypt(encryptedMessage)
-
+'''
+Purpose: encryptes a message given witha chipher and pads , cipher: a cipher used to encrypt the message
+Parameter: message: a string message to be sent
+Return: the encrypted message
+'''
 def encrypt_symmetric_message(message, cipher):
 	padBytes = int(256/8)
 	encryptedMessage = encryptedMessage = cipher.encrypt(pad(message.encode('ascii'), padBytes))
 	return encryptedMessage
-
+'''
+Purpose: decrypts an encrypted message with a given cipher
+Parameters: encrypted string message and cipher used in encrypt/decryption
+Return: the decrypted string message
+'''
 def decrypt_symmetric_message(encryptedMessage, cipher):
 	padBytes = int(256/8)
 	padded_message = cipher.decrypt(encryptedMessage)
 	unpadded_message = unpad(padded_message, padBytes)
 	decoded_message = unpadded_message.decode('ascii')
 	return decoded_message
-
+'''
 # Purpose: send message to specified socket
 # Parameters: message, socket to send to
+'''
 def sendMessage(message, socketType):
     socketType.send(message)
     return
-
+'''
 # Purpose: receive message from specified socket
 # Parameters: socket
 # Return: received message
+'''
 def receiveMessage(socketType):
     message = socketType.recv(2048)
     return message
     
 
-
+'''
 # Purpose: returns a dictionary of usernames and
 # passwords from user_pass.json
 # Return: dictionary of client usernames and passwords (clients)
+'''
 def read_user_pass():
     user_json = open("user_pass.json", "r")
     clients = json.load(user_json)
     user_json.close()
     return clients
-
+'''
 # Purpose: make directory for client if they do not exist already.
 # These folders need to exist in order to store emails for respective clients.
 # Parameters: client (username)
+'''
 def make_client_directory(username):
     # check if path exists before making directory
     if os.path.exists(username) == False:
         os.mkdir(username)
     return
-
+'''
 # Purpose: check formatted username and password (user;pass) with json file to check credentials
 # Parameters: formatted credentials (in format user;pass)
 # Return: return the username and True if authenticated, False if incorrect
+'''
 def check_user_pass(formatted_credentials):
     username_pass = formatted_credentials.split(";")
     with open("user_pass.json", "r") as jsonFile:
@@ -99,6 +122,11 @@ def check_user_pass(formatted_credentials):
     return username_pass[0], False
 
 
+'''
+Purpose: Takes a username and reads the inbox associated with the client username 
+Parameters: Username of the client
+Returns: the inbox chart of all emails in the inbox
+'''
 def read_inbox(username):
     if os.path.exists(f'{username}/inbox.json') == False:
         return "The inbox is empty.\n" + menu
@@ -110,14 +138,22 @@ def read_inbox(username):
         inbox_chart += newLine
     inbox_chart += "\n" + menu
     return inbox_chart
-
+'''
+Purpose:Takes a client name and gets their dictionary from the jason file
+Parameters: clients name in the jason file
+Returns: the data and wether its true or false 
+'''
 def get_dict(cli_nme):
     if os.path.exists(f'{cli_nme}/inbox.json') == False:
         return ' ', False
     f = open(f'{cli_nme}/inbox.json','r')
     data = json.load(f)
     return data, True
-
+'''
+Purpose: Uses the inbox and the index to find all info on a specific indexed email
+Parameters: the inbox and index of the inbox that the email we want is at
+Returns: the file with the email or false if it doesnt exist
+'''
 def get_email(inbox, index):
     email_exists = False
     for key in inbox:
@@ -131,6 +167,11 @@ def get_email(inbox, index):
         file = ""+cli+"_"+title+".txt"
     return file
 
+'''
+Purpose: Takes a filename and loads the email from it
+Parameters: the string filename
+Returns: the email
+'''
 def load_email(filename):
     f = open(filename)
     email = f.read()
@@ -292,7 +333,12 @@ def send_email(socket, cipher):
     save_email(reciever.split(";"), sender, title, date_time, email)
 
     return
-
+'''
+Purpose: This is the server side where the server can handle up to five clients at a time with
+a email server allowing them to write, read and view emails
+Parameters: None
+Returns: None
+'''
 def main():
     # define server socket on port 13000
     port = 13000

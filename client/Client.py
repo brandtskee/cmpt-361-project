@@ -6,58 +6,81 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Util.Padding import pad, unpad
 
+'''
+Purpose: converts binary strings to regular strings
+Parameter: a binary string
+Returns: the decode string'''
 def binary_to_string(bin_str):
-	return bin_str.decode('utf-8')
-
+    return bin_str.decode('utf-8')
+'''
+Purpose: convers regular string to binary string
+Parameter: regular string
+Returns: string into binary string
+'''
 def string_to_binary(string):
-	return string.encode('utf-8')
-
+    return string.encode('utf-8')
+'''
 # Purpose: creates cipher from public or private key file
 # USE FOR PUBLIC AND PRIVATE KEY CIPHERS
 # Parameters: file name of key
 # Return: generated cipher
+'''
 def create_assymetric_cipher(fileName):
 	with open(fileName, "rb") as key_file:
 		key_data = key_file.read()
 	key = RSA.import_key(key_data)
 	cipher = PKCS1_OAEP.new(key)
 	return cipher
-
+'''
 # Purpose: pad and encrypt message to be sent
 # Parameters: message string, AES or RSA cipher, required pad bytes
 # Return: encrypted and padded message
+'''
 def encrypt_message(message, cipher):
 	# encrypt message padded with 256 bits/32 bytes
 	encryptedMessage = cipher.encrypt(message)
 	return encryptedMessage
-
+'''
+Purpose: encryptes a message given witha chipher and pads , cipher: a cipher used to encrypt the message
+Parameter: message: a string message to be sent
+Return: the encrypted message
+'''
 def encrypt_symmetric_message(message, cipher):
 	padBytes = int(256/8)
 	encryptedMessage = encryptedMessage = cipher.encrypt(pad(message.encode('ascii'), padBytes))
 	return encryptedMessage
-
+	
+'''
+Purpose: decrypts an encrypted message with a given cipher
+Parameters: encrypted string message and cipher used in encrypt/decryption
+Return: the decrypted string message
+'''
 def decrypt_symmetric_message(encryptedMessage, cipher):
 	padBytes = int(256/8)
 	padded_message = cipher.decrypt(encryptedMessage)
 	unpadded_message = unpad(padded_message, padBytes)
 	decoded_message = unpadded_message.decode('ascii')
 	return decoded_message
-
+'''
 # Purpose: decrypt message and remove padding
 # Parameters: encrypted message, AES or RSA cipher and amount of pad bytes to be removed
 # Return: decoded and unpadded message
+'''
 def decrypt_message(encryptedMessage, cipher):
 	return cipher.decrypt(encryptedMessage)
-
+'''
 # Purpose: send message to specified socket
 # Parameters: message, socket to send to
+'''
 def sendMessage(message, socketType):
 	socketType.send(message)
 	return
 
+'''
 # Purpose: receive message from specified socket
 # Parameters: socket
 # Return: received message
+'''
 def receiveMessage(socketType):
 	message = socketType.recv(2048)
 	return message
@@ -141,6 +164,14 @@ def send_email(socket, user, cipher):
     print("The message is sent to the server.")
     return
 
+
+
+'''
+Parameters: None
+Purpose: Serves the client side of the programming allowing them to acces the the email protocols
+and login into a email system
+Returns: None
+'''
 def client():
 	serverName = input("Enter the server IP or name: ")
 	username = input("Enter your username: ")
@@ -171,7 +202,6 @@ def client():
 			client_privatekey_cipher = create_assymetric_cipher(private_key_name)
 			symmetric_key = decrypt_message(encrypted_symmetric_key, client_privatekey_cipher)
 			symmetric_cipher = AES.new(symmetric_key, AES.MODE_ECB)
-			print("SYM KEY: ", symmetric_key)
 			# send OK ack encrypted with symmetric key
 			acknowledgement = encrypt_symmetric_message("OK", symmetric_cipher)
 			sendMessage(acknowledgement, clientSocket)
