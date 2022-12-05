@@ -311,7 +311,7 @@ def send_email(socket, cipher):
 
     #recieve the email from the user
     email_len = decrypt_symmetric_message(receiveMessage(socket), cipher)
-    if email_len != "Too Long":
+    if email_len != "Too Long" and email_len != "No File":
         len_ack = "Email Length OK"
         sendMessage(encrypt_symmetric_message(len_ack, cipher), socket)
         sent_mail = decrypt_symmetric_message(receiveMessage(socket), cipher) 

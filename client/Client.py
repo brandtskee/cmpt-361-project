@@ -144,6 +144,10 @@ def send_email(socket, user, cipher):
     #checks if the user wants to load in a message
     if load_file.upper() == "Y":
         filename = input("Enter filename: ")
+        if os.path.exists(filename) == False:
+            sendMessage(encrypt_symmetric_message("No File", cipher), socket)
+            print("File does not exist")
+            return
         f = open(filename, "r")
         message = f.read()
         f.close()
