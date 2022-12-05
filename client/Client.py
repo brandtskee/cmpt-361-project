@@ -152,6 +152,7 @@ def send_email(socket, user, cipher):
 
     #verifies the title and the content lengths
     if verify_email(title, message) == False:
+        sendMessage(encrypt_symmetric_message("Too Long", cipher), socket)
         return
 
     #builds the email
