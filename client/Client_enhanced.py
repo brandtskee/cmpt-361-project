@@ -222,6 +222,7 @@ def client():
             # ENHANCED
             # decrypt with private key
             nonce = decrypt_message(receiveMessage(clientSocket), client_privatekey_cipher)
+            print(f"Nonce bytes: {str(nonce)}")
             # encrypt with symmetric key and send
             sendMessage(symmetric_cipher.encrypt(nonce), clientSocket)
 

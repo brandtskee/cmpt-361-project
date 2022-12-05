@@ -405,6 +405,7 @@ def main():
 
                 # create nonce bytes
                 nonce_bytes = get_random_bytes(int(256/8))
+                print(f"Nonce bytes for {username}: {str(nonce_bytes)}\n")
                 # send bytes encrypted with client public key
                 sendMessage(encrypt_message(nonce_bytes, client_publicKey_cipher), connectionSocket)
                 # receive nonce encrypted with symmetric key
