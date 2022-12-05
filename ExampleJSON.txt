@@ -1,3 +1,0 @@
-Example dictionary with the keys
-dict = {{'sender': 'client2', "datetime": "2022-07-21 19:29:35.768508", "title": "Why?"}, 
-{'sender': 'client1', "datetime": "2022-07-21 19:29:42.768508", "title": "This is Brain Melting"}}
