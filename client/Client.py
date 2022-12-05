@@ -136,12 +136,12 @@ Returns:
    None
 '''
 def send_email(socket, user, cipher): 
-	#get user input
+    #get user input
     send_to = input("Enter destinations (separated by ;): ")
     title = input("Enter title: ")
     load_file = input("Would you like to load contents from a file? (Y/N) ")
 
-	#checks if the user wants to load in a message
+    #checks if the user wants to load in a message
     if load_file.upper() == "Y":
         filename = input("Enter filename: ")
         f = open(filename, "r")
@@ -150,19 +150,28 @@ def send_email(socket, user, cipher):
     else:
         message = input("Enter message contents: ")
 
-	#verifies the title and the content lengths
+    #verifies the title and the content lengths
     if verify_email(title, message) == False:
         return
 
-	#builds the email
+    #builds the email
     email = construct_email(user, send_to, title, message)
-
+    len_email = str(len(email))
+    sendMessage(encrypt_symmetric_message(len_email, cipher), socket)
+    message = decrypt_symmetric_message(receiveMessage(socket), cipher)
+    print(message)
     #send the email to server
     sendMessage(encrypt_symmetric_message(email, cipher), socket)
 
-	#prints message to client 
+    #prints message to client 
     print("The message is sent to the server.")
+    message = decrypt_symmetric_message(receiveMessage(socket), cipher)
+    if "Corrupted" in message:
+        print("The message corrupted. Try again\n")
+        send_email(socket, user, cipher)
     return
+
+
 
 
 

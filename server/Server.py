@@ -310,28 +310,36 @@ def send_email(socket, cipher):
     sendMessage(encrypt_symmetric_message(start_msg, cipher), socket)
 
     #recieve the email from the user
+    email_len = decrypt_symmetric_message(receiveMessage(socket), cipher)
+    len_ack = "Email Length OK"
+    sendMessage(encrypt_symmetric_message(len_ack, cipher), socket)
     sent_mail = decrypt_symmetric_message(receiveMessage(socket), cipher) 
 
+    if (int(email_len) == int(len(sent_mail))):
+        sendMessage(encrypt_symmetric_message(f"Email OK\n", cipher), socket)
     #get the date and time for the recieved email
-    date_time = str(datetime.datetime.now())
+        date_time = str(datetime.datetime.now())
 
-    #deconstruct the email to get the individual values
-    sender, reciever, title, content_length, content = deconstruct_email(sent_mail)
+        #deconstruct the email to get the individual values
+        sender, reciever, title, content_length, content = deconstruct_email(sent_mail)
 
-    #checks the validity of the title and the contents
-    if verify_email(title, content) == False:
-        return
+        #checks the validity of the title and the contents
+        if verify_email(title, content) == False:
+            return
+        
+        #print email message to the server
+        print("An email from", sender, "is sent to", reciever, 
+            "has a content length of", content_length, '.')
 
-    #print email message to the server
-    print("An email from", sender, "is sent to", reciever, 
-          "has a content length of", content_length, '.')
+        #Reconstruct the email with the date and time added
+        email = construct_email(sender, reciever, title, content, date_time)
 
-    #Reconstruct the email with the date and time added
-    email = construct_email(sender, reciever, title, content, date_time)
-
-    #save the email to the appropriate client files
-    save_email(reciever.split(";"), sender, title, date_time, email)
-
+        #save the email to the appropriate client files
+        save_email(reciever.split(";"), sender, title, date_time, email)
+        sendMessage(encrypt_symmetric_message(f"Email OK\n", cipher), socket)
+    else:
+         sendMessage(encrypt_symmetric_message(f"Corrupted Email\n", cipher), socket)
+         send_email(socket, cipher)
     return
 '''
 Purpose: This is the server side where the server can handle up to five clients at a time with
